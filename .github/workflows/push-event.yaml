@@ -1,6 +1,6 @@
 name: Push Event 
 on: 
-    push: 
+    push: # push to any branch , this wil trigger the workflow
 jobs:
   push-demo-job:
     runs-on: ubuntu-latest
@@ -13,6 +13,7 @@ jobs:
         echo "Branch  is :          ${{ github.ref_name }}"
         echo "Actor is :            ${{ github.actor }}"
         echo "Commit SHA is:        ${{ github.sha }}"
+
 
 
 
