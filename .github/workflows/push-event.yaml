@@ -1,6 +1,8 @@
 name: Push Event 
 on: 
     push: # push to any branch , this wil trigger the workflow
+      branches: # branch filter 
+      - main
 jobs:
   push-demo-job:
     runs-on: ubuntu-latest
