@@ -11,6 +11,7 @@ jobs:
             echo "**** Building the Project ******"
             sleep 10
             echo "***** Build Completed Succesfully*****"
+        # - uses: # 3rd party action call
     test:
         needs: build
         runs-on: ubuntu-latest

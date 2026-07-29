@@ -1,0 +1,24 @@
+name: Push Event 
+on: 
+    push: 
+jobs:
+  push-demo-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Print Event Details
+      run: |
+        echo "Details of my workflow"
+        echo "Event Name is :       ${{ github.event_name }}"
+        echo "Reposiroty Name is:   ${{ github.repository }}"
+        echo "Branch  is :          ${{ github.ref_name }}"
+        echo "Actor is :            ${{ github.actor }}"
+        echo "Commit SHA is:        ${{ github.sha }}"
+
+
+
+
+## event_name is called as context property
+## github is called as context 
+# expression syntax 
+# expressions
+# context 
