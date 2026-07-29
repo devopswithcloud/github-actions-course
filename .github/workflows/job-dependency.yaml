@@ -1,0 +1,35 @@
+name: Job Dependency
+on: 
+  workflow_dispatch: 
+jobs:
+    build: #id 
+        name: Build Job # name of the job
+        runs-on: ubuntu-latest
+        steps:
+        - name: Build
+          run: |
+            echo "**** Building the Project ******"
+            sleep 10
+            echo "***** Build Completed Succesfully*****"
+    test:
+        needs: build
+        runs-on: ubuntu-latest
+        name: Test Job
+        steps:
+          - name: Run Tests
+            run: |
+                echo "******RUnning the Tests ***********"
+                sleep 10
+                echo "** All tests completed ******"
+    deploy:
+        needs: 
+        - build
+        - test
+        runs-on: ubuntu-latest
+        name: Deploy Job
+        steps:
+          - name: Deploy Application
+            run: |
+                echo "****** Deploying the Application ***********"
+                sleep 10
+                echo "*** Application Deployed Succesfully ******"
