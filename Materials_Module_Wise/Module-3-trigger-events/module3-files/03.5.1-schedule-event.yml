@@ -1,0 +1,12 @@
+name: 10-schedule-event.yaml
+on:
+  schedule:
+  - cron: '*/5 * * * *' 
+jobs:
+    schedule-demo:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Print Schedule Information
+          run: |
+            echo "Event type is : ${{ github.event_name }}"
+

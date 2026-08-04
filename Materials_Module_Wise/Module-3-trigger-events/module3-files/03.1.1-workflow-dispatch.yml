@@ -1,0 +1,18 @@
+name: 01-Workflow-Dispatch-Event
+
+on:
+  workflow_dispatch:
+
+jobs:
+  manual-trigger-demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Message
+        run: echo "This workflow was triggered manually"
+
+      - name: Print Trigger Info
+        run: |
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Branch Name: ${{ github.ref_name }}"
+          echo "Triggered By: ${{ github.actor }}"

@@ -1,0 +1,22 @@
+name: 03-Push-Branch-Filter
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  show-info:
+    name: Push Trigger Info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show what triggered this
+        run: |
+          echo "============================="
+          echo "Triggered by: PUSH EVENT"
+          echo "============================="
+          echo "Branch    : ${{ github.ref_name }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Pushed by : ${{ github.actor }}"
+          echo "Repo      : ${{ github.repository }}"
+          echo "============================="

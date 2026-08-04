@@ -1,0 +1,26 @@
+name: 06-Path-Filter
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'src/**'        # any file inside src folder
+      - 'pom.xml'       # build file changed
+      - 'Dockerfile'    # docker file changed
+jobs:
+  show-info:
+    name: Push Trigger Info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show what triggered this
+        run: |
+          echo "============================="
+          echo "Triggered by: PUSH EVENT"
+          echo "Triggered by: " 
+          echo "============================="
+          echo "Branch    : ${{ github.ref_name }}"
+          echo "Commit SHA: ${{ github.sha }}"
+          echo "Pushed by : ${{ github.actor }}"
+          echo "Repo      : ${{ github.repository }}"
+          echo "============================="

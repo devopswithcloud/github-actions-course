@@ -1,0 +1,14 @@
+name: workflow-2
+on:
+  workflow_run:
+    workflows:
+      - workflow-1
+    types:
+      - completed
+jobs:
+  job1:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Printing
+        run: echo "This workflow is triggered because workflow is completed"

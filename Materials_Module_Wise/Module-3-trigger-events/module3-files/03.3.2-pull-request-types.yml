@@ -1,0 +1,55 @@
+name: 09-Trigger - Pull Request
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened        # PR created
+      - synchronize   # new commit pushed to PR
+      - reopened      # closed PR reopened
+
+jobs:
+  show-info:
+    name: PR Trigger Info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show what triggered this
+        run: |
+          echo "============================="
+          echo "Triggered by: PULL REQUEST"
+          echo "============================="
+          echo "PR Number  : ${{ github.event.pull_request.number }}"
+          echo "PR Title   : ${{ github.event.pull_request.title }}"
+          echo "From Branch: ${{ github.head_ref }}"
+          echo "To Branch  : ${{ github.base_ref }}"
+          echo "Author     : ${{ github.actor }}"
+          echo "============================="
+
+# Test 1 — Open a PR (should fire):
+# # create a new branch
+# git checkout -b feature/pr-trigger-test
+
+# # make a small change
+# echo "pr test" >> random-commit.txt
+# git add .
+# git commit -m "test: testing PR trigger"
+# git push origin feature/pr-trigger-test
+
+# Then go to GitHub → Pull Requests → New Pull Request → base: master ← compare: feature/pr-trigger-test → Create PR
+
+
+
+# Test 2 — Push another commit to the same PR (should fire again):
+
+# # still on feature/pr-trigger-test branch
+# echo "another change" >> random-commit.txt
+# git add .
+# git commit -m "test: second commit on PR"
+# git push origin feature/pr-trigger-test
+
+# Test 3 — Push directly to master without a PR (should NOT fire):
+# git checkout master
+# echo "direct push" >> random-commit.txt
+# git add .
+# git commit -m "test: direct push to master"
+# git push origin master

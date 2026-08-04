@@ -1,0 +1,17 @@
+name: 07-Paths-Ignore
+
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - docs/**
+
+jobs:
+  paths-ignore-demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Path Ignore Information
+        run: |
+          echo "Workflow triggered because non-documentation files changed"
+          echo "Branch : ${{ github.ref_name }}"
