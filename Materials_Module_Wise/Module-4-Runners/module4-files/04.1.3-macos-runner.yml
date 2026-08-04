@@ -1,0 +1,32 @@
+name: 04.1.3-macOS-Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  macos-demo:
+    runs-on: macos-latest
+    steps:
+      - name: Print OS Info
+        run: |
+          echo "============================="
+          echo "RUNNER INFORMATION"
+          echo "============================="
+          echo "OS        : ${{ runner.os }}"
+          echo "Runner    : ${{ runner.name }}"
+          echo "Arch      : ${{ runner.arch }}"
+          echo "============================="
+
+      - name: Check pre-installed tools
+        run: |
+          echo "Java version   : $(java -version 2>&1 | head -1)"
+          echo "Git version    : $(git --version)"
+          echo "Node version   : $(node --version)"
+          echo "Python version : $(python3 --version)"
+          echo "Brew version   : $(brew --version | head -1)"
+
+      - name: Check machine specs
+        run: |
+          echo "CPU cores : $(sysctl -n hw.ncpu)"
+          echo "RAM       : $(sysctl -n hw.memsize | awk '{print $1/1024/1024/1024 " GB"}')"
+          echo "Disk      : $(df -h / | tail -1 | awk '{print $2}')"

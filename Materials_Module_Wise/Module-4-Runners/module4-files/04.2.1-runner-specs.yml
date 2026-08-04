@@ -1,0 +1,55 @@
+name: 04.2.1-Runner-Specs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  runner-specs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner context info
+        run: |
+          echo "============================="
+          echo "RUNNER CONTEXT"
+          echo "============================="
+          echo "OS        : ${{ runner.os }}"
+          echo "Arch      : ${{ runner.arch }}"
+          echo "Name      : ${{ runner.name }}"
+          echo "Temp dir  : ${{ runner.temp }}"
+          echo "Tool cache: ${{ runner.tool_cache }}"
+          echo "============================="
+
+      - name: Machine specifications
+        run: |
+          echo "============================="
+          echo "MACHINE SPECIFICATIONS"
+          echo "============================="
+          echo "CPU cores : $(nproc)"
+          echo "RAM       : $(free -h | grep Mem | awk '{print $2}')"
+          echo "Disk      : $(df -h / | tail -1 | awk '{print $2}')"
+          echo "============================="
+
+      - name: Pre-installed software
+        run: |
+          echo "============================="
+          echo "PRE-INSTALLED SOFTWARE"
+          echo "============================="
+          echo "Java      : $(java -version 2>&1 | head -1)"
+          echo "Maven     : $(mvn --version 2>&1 | head -1)"
+          echo "Docker    : $(docker --version)"
+          echo "Git       : $(git --version)"
+          echo "Node      : $(node --version)"
+          echo "Python    : $(python3 --version)"
+          echo "kubectl   : $(kubectl version --client 2>&1 | head -1)"
+          echo "AWS CLI   : $(aws --version 2>&1)"
+          echo "============================="
+
+      - name: Environment variables
+        run: |
+          echo "============================="
+          echo "KEY ENVIRONMENT VARIABLES"
+          echo "============================="
+          echo "HOME      : $HOME"
+          echo "RUNNER_OS : $RUNNER_OS"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "============================="

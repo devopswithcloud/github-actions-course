@@ -1,0 +1,41 @@
+name: 04.3.1-Multiple-OS-Matrix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  os-matrix:
+    name: Run on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    steps:
+      - name: Print OS Info
+        run: |
+          echo "Running on : ${{ runner.os }}"
+          echo "Matrix OS  : ${{ matrix.os }}"
+          echo "Arch       : ${{ runner.arch }}"
+
+      - name: OS specific command (Linux)
+        if: runner.os == 'Linux'
+        run: echo "This step only runs on Linux"
+
+      - name: OS specific command (Windows)
+        if: runner.os == 'Windows'
+        run: echo "This step only runs on Windows"
+        shell: pwsh
+
+      - name: OS specific command (macOS)
+        if: runner.os == 'macOS'
+        run: echo "This step only runs on macOS"
+
+# ════════════════════════════════════════════════════════════
+# This creates 3 parallel jobs — one per OS:
+#   Run on ubuntu-latest
+#   Run on windows-latest
+#   Run on macos-latest
+#
+# Use runner.os to conditionally run steps per OS
+# ════════════════════════════════════════════════════════════

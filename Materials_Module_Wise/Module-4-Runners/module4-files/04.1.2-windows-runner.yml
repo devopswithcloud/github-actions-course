@@ -1,0 +1,34 @@
+name: 04.1.2-Windows-Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-demo:
+    runs-on: windows-latest
+    steps:
+      - name: Print OS Info
+        run: |
+          echo "============================="
+          echo "RUNNER INFORMATION"
+          echo "============================="
+          echo "OS        : ${{ runner.os }}"
+          echo "Runner    : ${{ runner.name }}"
+          echo "Arch      : ${{ runner.arch }}"
+          echo "============================="
+
+      - name: Check pre-installed tools
+        run: |
+          Write-Host "Java version   : $(java -version 2>&1 | Select-String 'version')"
+          Write-Host "Git version    : $(git --version)"
+          Write-Host "Node version   : $(node --version)"
+          Write-Host "Python version : $(python --version)"
+        shell: pwsh
+
+      - name: Check machine specs
+        run: |
+          $cpu = (Get-WmiObject Win32_ComputerSystem).NumberOfLogicalProcessors
+          $ram = [math]::Round((Get-WmiObject Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
+          Write-Host "CPU cores : $cpu"
+          Write-Host "RAM (GB)  : $ram"
+        shell: pwsh

@@ -1,0 +1,33 @@
+name: 04.1.1-Ubuntu-Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ubuntu-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print OS Info
+        run: |
+          echo "============================="
+          echo "RUNNER INFORMATION"
+          echo "============================="
+          echo "OS        : ${{ runner.os }}"
+          echo "Runner    : ${{ runner.name }}"
+          echo "Arch      : ${{ runner.arch }}"
+          echo "============================="
+
+      - name: Check pre-installed tools
+        run: |
+          echo "Java version   : $(java -version 2>&1 | head -1)"
+          echo "Docker version : $(docker --version)"
+          echo "Git version    : $(git --version)"
+          echo "Maven version  : $(mvn --version | head -1)"
+          echo "Node version   : $(node --version)"
+          echo "Python version : $(python3 --version)"
+
+      - name: Check machine specs
+        run: |
+          echo "CPU cores : $(nproc)"
+          echo "RAM       : $(free -h | grep Mem | awk '{print $2}')"
+          echo "Disk      : $(df -h / | tail -1 | awk '{print $2}')"
