@@ -1,0 +1,19 @@
+name: 01-env-variable
+on: 
+    workflow_dispatch:
+env: 
+# env is different environment is different
+    # these are static variables, they are not dynamic.
+    ENVIRONMENT: "dev"
+    APP_NAME: i27Academy
+jobs:
+    env-demo:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Prin variables
+          run: |
+            echo "Printing Environmental Variables"
+            echo "Application name is: $APP_NAME"
+            echo "Environment is: $ENVIRONMENT"
+
+# workflow , job, step level 

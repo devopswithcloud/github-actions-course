@@ -1,0 +1,9 @@
+name: Third-workflow
+on:
+   workflow_dispatch: 
+jobs:
+    first-job:
+        runs-on: ubuntu-latest
+        steps:
+         - name: Print Welcome message
+           run: echo""Welcome githhub actions"   

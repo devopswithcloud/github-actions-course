@@ -1,0 +1,48 @@
+name: 05.1.1-Without-Actions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  manual-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manually clone the repository
+        run: |
+          git clone https://github.com/${{ github.repository }}.git .
+          git checkout ${{ github.sha }}
+          echo "Repository cloned successfully"
+          ls -la
+
+      - name: Manually install Java 21
+        run: |
+          echo "Downloading Java 21..."
+          wget -q https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
+          echo "Extracting Java..."
+          tar -xzf openjdk-21.0.2_linux-x64_bin.tar.gz
+          echo "Setting up JAVA_HOME..."
+          export JAVA_HOME=$PWD/jdk-21.0.2
+          export PATH=$JAVA_HOME/bin:$PATH
+          echo "JAVA_HOME=$PWD/jdk-21.0.2" >> $GITHUB_ENV
+          echo "$PWD/jdk-21.0.2/bin" >> $GITHUB_PATH
+          echo "Java installed successfully"
+
+      - name: Verify Java installation
+        run: |
+          java -version
+          echo "JAVA_HOME: $JAVA_HOME"
+
+      - name: Build the project
+        run: mvn package -DskipTests
+
+# ════════════════════════════════════════════════════════════
+# Notice how much work is needed just to:
+#   1. Clone the repo
+#   2. Install Java
+#
+# And this does not even handle:
+#   → Java version conflicts
+#   → Maven cache
+#   → Download failures
+#   → Different OS compatibility
+# ════════════════════════════════════════════════════════════
