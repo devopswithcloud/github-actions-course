@@ -1,0 +1,22 @@
+name: 08-Repository-Variables-secrets
+on:
+  workflow_dispatch: 
+jobs:
+    variables-demo:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Print Repository Variables
+        run: |
+          echo "Printing Repository Variables"
+          echo "Application name is: ${{ vars.APP_NAME}}"
+          echo "Environment is: ${{ vars.DEPLOY_ENV}}"
+          echo "Registry is : ${{ vars.REGISTRY}}"
+    secrets-demo:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Print Repository Secrets
+        run: |
+          echo "Printing Repository Secrets"
+          echo "MySecret is : ${{ secrets.MY_SECRET}}"
+
+
