@@ -1,0 +1,42 @@
+name: 03-Step-Level-Variables
+on:
+    workflow_dispatch:
+jobs:
+  dev-job:
+    runs-on: ubuntu-latest
+    env:
+        ENVIRONMENT: "dev"
+        APP_NAME: i27Academy-dev-app
+    steps:
+    - name: Print job level variables
+      run: |
+        echo "Printing Environmental Variables"
+        echo "Application name is: $APP_NAME"
+        echo "Environment is: $ENVIRONMENT"
+    - name: Print step level variables
+      env:
+        APP_VERSION: "1.0.0"
+      run: |
+        echo "Printing Step Level Variables"
+        echo "Application version is: $APP_VERSION"
+        echo "Application name is: $APP_NAME"
+        echo "Environment is: $ENVIRONMENT"
+  prod-job:
+    runs-on: ubuntu-latest
+    env:
+        ENVIRONMENT: "prod"
+        APP_NAME: i27Academy-prod-app
+    steps:
+    - name: Print job level variables
+      run: |
+        echo "Printing Environmental Variables"
+        echo "Application name is: $APP_NAME"
+        echo "Environment is: $ENVIRONMENT"
+    - name: Print step level variables
+      env:
+        APP_VERSION: "2.0.0"
+      run: |
+        echo "Printing Step Level Variables"
+        echo "Application version is: $APP_VERSION"
+        echo "Application name is: $APP_NAME"
+        echo "Environment is: $ENVIRONMENT"
