@@ -17,3 +17,7 @@ jobs:
           echo "Trying to Print APP_VERSION and NAME in the next step"
           echo "Application Version is: $APP_VERSION"
           echo "Name is: $NAME"
+# First Step: APP_VERSION and NAME print nothing 
+# second step APP_VERSION and NAME are printing correctly.,
+# $GITHUB_ENV is a special file that allows you to set environment variables that will be available to all subsequent steps in the workflow.
+# $GITHUB_ENV  variable are only availble in the same job.
