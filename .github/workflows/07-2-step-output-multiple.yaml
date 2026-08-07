@@ -11,15 +11,17 @@ jobs:
           echo "app-name=i27academy-devops-dashboard-app" >> $GITHUB_OUTPUT
           echo "image-tag=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "branch-name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "***********************************************************"
+          echo "Printing application name: ${{steps.build-info.outputs.app-name}}"
       - name: Read all outputs from the abouve step
         run: |
           echo "App Name is:    ${{ steps.build-info.outputs.app-name}}"
           echo "Image Tag is:   ${{ steps.build-info.outputs.image-tag}}"
           echo "Branch Name is: ${{ steps.build-info.outputs.branch-name}}"
-      - name: Use output to create docker imag tag
+      - name: Use output to create docker image tag
         run: |
           echo "Creating docker image tag using the step output"
-          echo "devopswithcloudhub/${{ steps.build-info.outputs.app-name}}:${{ steps.build-info.outputs.image-tag}} ."
+          echo "devopswithcloudhub/${{ steps.build-info.outputs.app-name}}:${{ steps.build-info.outputs.image-tag}}"
 
 
 # ${{ steps.build-info.outputs.app-name}}
