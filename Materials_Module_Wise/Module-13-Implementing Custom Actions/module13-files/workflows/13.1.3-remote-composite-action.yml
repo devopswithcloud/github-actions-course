@@ -1,0 +1,55 @@
+name: 13.1.3-Remote-Composite-Action
+
+# ════════════════════════════════════════════════════════════
+# This demonstrates calling a composite action
+# from a DIFFERENT repository
+#
+# Useful when:
+#   → Multiple repos need the same action
+#   → You want to maintain the action in one place
+#   → All repos get updates automatically
+#
+# For i27Academy:
+#   Actions repo: i27academy/i27academy-github-actions
+#   Service repos: each service calls actions from that repo
+# ════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-with-remote-action:
+    name: Build using Remote Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Calling composite action from another repo
+      - name: Build using remote action
+        id: build
+        uses: i27academy/i27academy-github-actions/.github/actions/java-build@main
+        #     └──────────────┬──────────────┘  └───────────┬───────────┘  └──┬──┘
+        #              owner/repo                    path to action.yml      branch/tag
+        with:
+          java-version: '21'
+          run-tests: 'true'
+
+      - name: Show outputs
+        run: |
+          echo "JAR path    : ${{ steps.build.outputs.jar-path }}"
+          echo "Test result : ${{ steps.build.outputs.test-result }}"
+
+# ════════════════════════════════════════════════════════════
+# Remote action syntax:
+#   uses: OWNER/REPO/.github/actions/ACTION-NAME@REF
+#
+# REF can be:
+#   @main          → latest on main branch
+#   @v1.0.0        → specific tag (recommended for stability)
+#   @abc1234       → exact SHA (most stable)
+#
+# Best practice:
+#   → Pin to a tag or SHA for production
+#   → @main changes without warning
+# ════════════════════════════════════════════════════════════

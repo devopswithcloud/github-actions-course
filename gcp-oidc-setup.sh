@@ -16,19 +16,19 @@
 # ── CONFIGURATION — update these values before running ───────
 
 # GCP project where resources will be created
-export PROJECT_ID="i27learn-project"
+export PROJECT_ID="fluid-analogy-463508-r4"
 
 # GitHub organization or username
-export GITHUB_ORG="devopswithcloud"
+export GITHUB_ORG="i27academy"
 
 # GitHub repository name (must be exact)
-export GITHUB_REPO="i27-dashboard-b10"
+export GITHUB_REPO="i27academy-webapp"
 
 # Service account name — identifies what this SA is for
-export SA_NAME="i27academy-github-actions-sa"
+export SA_NAME="i27academy-webapp-github-actions-sa"
 
 # Workload identity pool ID — must be unique in the project
-export POOL_ID="github-actions-pool"
+export POOL_ID="i27academy-webapp-github-actions-pool"
 
 # OIDC provider ID — identifies GitHub as the identity provider
 export PROVIDER_ID="github-actions-provider"

@@ -1,0 +1,430 @@
+name: 12.4.1-Full-Promotion-Pipeline
+
+# ════════════════════════════════════════════════════════════
+# Complete CI/CD Pipeline
+#
+# Build & Test
+#      ↓
+# Sonar Scan + Trivy Scan
+#      ↓
+# Docker Build & Push
+#      ↓
+# Development
+#      ↓
+# Staging
+#      ↓
+# Production
+#      ↓
+# Summary
+#
+# Production deployment:
+#   Only when a valid release tag is pushed
+#   Example: v1.0.0, v2.1.3
+#
+# Setup required:
+#
+# Environments:
+#   development  → no protection
+#   staging      → no protection
+#   production   → required reviewers
+#                  allow release tags v*.*.*
+#
+# Repository Secrets:
+#   DOCKERHUB_USERNAME
+#   DOCKERHUB_TOKEN
+# ════════════════════════════════════════════════════════════
+
+
+on:
+  push:
+    branches: [ main ]
+
+    # Required for production release
+    tags:
+      - 'v*.*.*'
+
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'Dockerfile'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to deploy
+        type: string
+        default: 'v1.0.0'
+
+
+# ════════════════════════════════════════════════════════════
+# GLOBAL ENVIRONMENT VARIABLES
+# ════════════════════════════════════════════════════════════
+
+env:
+  DOCKER_IMAGE_NAME: i27academy/devops-dashboard
+
+
+jobs:
+
+  # ════════════════════════════════════════════════════════════
+  # 1. BUILD & TEST
+  # ════════════════════════════════════════════════════════════
+
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-tag: ${{ steps.tag.outputs.value }}
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+
+      - name: Build and Run Tests
+        run: mvn clean package
+
+
+      # Docker Image Tag = Commit SHA
+      - name: Generate Image Tag
+        id: tag
+        run: |
+          echo "value=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: devops-dashboard-jar
+          path: target/devops-dashboard-1.0.0.jar
+          retention-days: 7
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 2. SONARQUBE SCAN
+  # ════════════════════════════════════════════════════════════
+
+  sonar-scan:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+
+      - name: SonarQube Scan
+        run: |
+          echo "===================================="
+          echo "SONARQUBE SCAN"
+          echo "===================================="
+          echo "Scanning source code..."
+          echo "Checking bugs..."
+          echo "Checking code smells..."
+          echo "Checking vulnerabilities..."
+          echo "SonarQube Scan Completed ✅"
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 3. TRIVY SCAN
+  # ════════════════════════════════════════════════════════════
+
+  trivy-scan:
+    name: Trivy Scan
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+
+      - name: Trivy Scan
+        run: |
+          echo "===================================="
+          echo "TRIVY SECURITY SCAN"
+          echo "===================================="
+          echo "Scanning dependencies..."
+          echo "Checking security vulnerabilities..."
+          echo "Checking critical vulnerabilities..."
+          echo "Trivy Scan Completed ✅"
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 4. DOCKER BUILD & PUSH
+  # ════════════════════════════════════════════════════════════
+
+  docker-build-push:
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+
+    # Docker starts only after BOTH scans complete successfully
+    needs:
+      - build
+      - sonar-scan
+      - trivy-scan
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+      - name: Build Docker Image
+        run: |
+          echo "Building Docker Image..."
+
+          docker build \
+            -t ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }} \
+            .
+
+
+      - name: Push Docker Image
+        run: |
+          echo "Pushing Docker Image..."
+
+          docker push \
+            ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}
+
+
+      - name: Docker Image Details
+        run: |
+          echo "===================================="
+          echo "DOCKER IMAGE PUSHED ✅"
+          echo "===================================="
+          echo "Repository : ${{ env.DOCKER_IMAGE_NAME }}"
+          echo "Tag        : ${{ needs.build.outputs.image-tag }}"
+          echo "Full Image : ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}"
+          echo "===================================="
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 5. DEPLOY DEVELOPMENT
+  # ════════════════════════════════════════════════════════════
+
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+      - docker-build-push
+
+    concurrency:
+      group: deploy-development
+      cancel-in-progress: false
+
+    environment:
+      name: development
+      url: https://dev.i27academy.com
+
+    steps:
+
+      - name: Deploy to Development
+        run: |
+          echo "============================="
+          echo "DEPLOYING TO DEVELOPMENT"
+          echo "============================="
+          echo "Docker Image : ${{ env.DOCKER_IMAGE_NAME }}"
+          echo "Image Tag    : ${{ needs.build.outputs.image-tag }}"
+          echo "Full Image   : ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}"
+          echo "Version      : ${{ inputs.version || github.sha }}"
+          echo "Deployed     : ✅"
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 6. DEPLOY STAGING
+  # ════════════════════════════════════════════════════════════
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+      - deploy-dev
+
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+
+    environment:
+      name: staging
+      url: https://staging.i27academy.com
+
+    steps:
+
+      - name: Deploy to Staging
+        run: |
+          echo "============================="
+          echo "DEPLOYING TO STAGING"
+          echo "============================="
+          echo "Docker Image : ${{ env.DOCKER_IMAGE_NAME }}"
+          echo "Image Tag    : ${{ needs.build.outputs.image-tag }}"
+          echo "Full Image   : ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}"
+          echo "Deployed     : ✅"
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 7. VALIDATE PRODUCTION RELEASE TAG
+  # ════════════════════════════════════════════════════════════
+
+  validate-prod-tag:
+    name: Validate Production Tag
+    runs-on: ubuntu-latest
+
+    needs:
+      - deploy-staging
+
+    # Only execute this job for a Git tag
+    if: ${{ github.ref_type == 'tag' }}
+
+    steps:
+
+      - name: Validate vX.X.X Format
+        run: |
+          echo "===================================="
+          echo "VALIDATING PRODUCTION TAG"
+          echo "===================================="
+
+          echo "Tag: ${{ github.ref_name }}"
+
+          if [[ "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+
+            echo "Valid Production Tag ✅"
+            echo "Release: ${{ github.ref_name }}"
+
+          else
+
+            echo "Invalid Production Tag ❌"
+            echo "Expected format: vX.X.X"
+            echo "Examples:"
+            echo "v1.0.0"
+            echo "v2.5.1"
+
+            exit 1
+
+          fi
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 8. DEPLOY PRODUCTION
+  # ════════════════════════════════════════════════════════════
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+      - deploy-staging
+      - validate-prod-tag
+
+    # Production ONLY for tag-triggered workflow
+    if: ${{ github.ref_type == 'tag' }}
+
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    environment:
+      name: production
+      url: https://i27academy.com
+
+    steps:
+
+      - name: Deploy to Production
+        run: |
+          echo "===================================="
+          echo "PRODUCTION DEPLOYMENT"
+          echo "===================================="
+          echo "Release Tag  : ${{ github.ref_name }}"
+          echo "Docker Image : ${{ env.DOCKER_IMAGE_NAME }}"
+          echo "Image Tag    : ${{ needs.build.outputs.image-tag }}"
+          echo "Full Image   : ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}"
+          echo "Approved by  : ${{ github.actor }}"
+          echo "Production Deployment Completed ✅"
+
+
+
+  # ════════════════════════════════════════════════════════════
+  # 9. PIPELINE SUMMARY
+  # ════════════════════════════════════════════════════════════
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+      - sonar-scan
+      - trivy-scan
+      - docker-build-push
+      - deploy-dev
+      - deploy-staging
+      - validate-prod-tag
+      - deploy-production
+
+    if: always()
+
+    steps:
+
+      - name: Write Summary
+        run: |
+
+          echo "## CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Build & Test | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| SonarQube Scan | ${{ needs.sonar-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Trivy Scan | ${{ needs.trivy-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Docker Build & Push | ${{ needs.docker-build-push.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Development | ${{ needs.deploy-dev.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Staging | ${{ needs.deploy-staging.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Production Tag Validation | ${{ needs.validate-prod-tag.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "| Production | ${{ needs.deploy-production.result }} |" >> $GITHUB_STEP_SUMMARY
+
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Docker Image" >> $GITHUB_STEP_SUMMARY
+
+          echo "\`${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Release Information" >> $GITHUB_STEP_SUMMARY
+
+          echo "Git Ref: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

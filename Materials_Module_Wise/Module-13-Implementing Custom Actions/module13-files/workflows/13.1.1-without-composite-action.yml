@@ -1,0 +1,85 @@
+name: 13.1.1-Without-Composite-Action
+
+# ════════════════════════════════════════════════════════════
+# This workflow shows the PROBLEM — repeated steps
+# The same checkout + setup-java + build logic
+# is copy-pasted across multiple jobs
+#
+# Problems:
+#   → If Java version needs to change — update in 3 places
+#   → If distribution changes — update in 3 places
+#   → Easy to miss one — inconsistency
+#   → More lines = more chances for mistakes
+# ════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code       # repeated
+        uses: actions/checkout@v4
+
+      - name: Set up Java         # repeated
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Upload test reports # repeated
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code       # repeated
+        uses: actions/checkout@v4
+
+      - name: Set up Java         # repeated
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Build JAR
+        run: mvn package -DskipTests
+
+      - name: Upload JAR          # repeated
+        uses: actions/upload-artifact@v4
+        with:
+          name: devops-dashboard-jar
+          path: target/devops-dashboard-1.0.0.jar
+          retention-days: 7
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code       # repeated again
+        uses: actions/checkout@v4
+
+      - name: Set up Java         # repeated again
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Run quality checks
+        run: mvn verify -DskipTests

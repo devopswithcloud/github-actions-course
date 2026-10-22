@@ -1,6 +1,7 @@
 name: 08.1.5-Context-Inputs
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       environment:

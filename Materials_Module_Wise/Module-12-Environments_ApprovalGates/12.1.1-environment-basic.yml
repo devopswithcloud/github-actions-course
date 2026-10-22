@@ -1,0 +1,79 @@
+name: 12.1.1-Environment-Basic
+
+# ════════════════════════════════════════════════════════════
+# Before running this workflow create these environments:
+#   Repo → Settings → Environments → New environment
+#
+#   development  → no protection rules
+#   staging      → no protection rules
+#   production   → required reviewers: your GitHub username
+# ════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: https://dev.i27academy.com
+    steps:
+      - name: Deploy to development
+        run: |
+          echo "============================="
+          echo "DEPLOYING TO DEVELOPMENT"
+          echo "============================="
+          echo "Environment : development"
+          echo "Actor       : ${{ github.actor }}"
+          echo "Branch      : ${{ github.ref_name }}"
+          echo "Deployment complete ✅"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment:
+      name: staging
+      url: https://staging.i27academy.com
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "============================="
+          echo "DEPLOYING TO STAGING"
+          echo "============================="
+          echo "Environment : staging"
+          echo "Actor       : ${{ github.actor }}"
+          echo "Deployment complete ✅"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production
+      url: https://i27academy.com
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "============================="
+          echo "DEPLOYING TO PRODUCTION ✅"
+          echo "============================="
+          echo "Environment : production"
+          echo "Approved by : ${{ github.actor }}"
+          echo "Branch      : ${{ github.ref_name }}"
+          echo "Deployment complete ✅"
+
+# ════════════════════════════════════════════════════════════
+# What happens when this runs:
+#
+# deploy-dev    → runs automatically
+# deploy-staging → runs automatically after dev
+# deploy-production → PAUSES here
+#   → GitHub sends notification to required reviewers
+#   → Reviewer sees "Review deployments" button
+#   → Reviewer approves → workflow continues
+#   → Reviewer rejects → workflow fails
+#   → Full audit trail recorded
+# ════════════════════════════════════════════════════════════

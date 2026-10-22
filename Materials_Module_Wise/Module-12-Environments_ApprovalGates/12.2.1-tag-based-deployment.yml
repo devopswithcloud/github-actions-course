@@ -1,0 +1,77 @@
+name: 12.2.1-Tag-Based-Deployment
+
+# ════════════════════════════════════════════════════════════
+# Triggers only on version tags: v1.0.0, v1.2.3, v2.0.0
+#
+# How to trigger:
+#   git tag v1.0.0
+#   git push origin v1.0.0
+# ════════════════════════════════════════════════════════════
+
+on:
+  push:
+    tags:
+      - 'v*'          # v1.0.0, v1.2.3, v2.0.0-rc1
+
+jobs:
+
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - run: mvn package -DskipTests
+      - id: ver
+        run: echo "value=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-jar
+          path: target/devops-dashboard-1.0.0.jar
+          retention-days: 30
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging
+      url: https://staging.i27academy.com
+    steps:
+      - name: Deploy release to staging
+        run: |
+          echo "Deploying ${{ needs.build.outputs.version }} to staging"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [ build, deploy-staging ]
+    environment:
+      name: production
+      url: https://i27academy.com
+    steps:
+      - name: Deploy release to production
+        run: |
+          echo "============================="
+          echo "PRODUCTION RELEASE"
+          echo "============================="
+          echo "Version    : ${{ needs.build.outputs.version }}"
+          echo "Tag        : ${{ github.ref_name }}"
+          echo "Approved by: ${{ github.actor }}"
+          echo "============================="
+
+# ════════════════════════════════════════════════════════════
+# Branch restriction in environment settings:
+#   Repo → Settings → Environments → production
+#   → Deployment branches and tags
+#   → Add pattern: v*
+#
+# Now only v* tags can deploy to production
+# Feature branches cannot reach production even manually
+# ════════════════════════════════════════════════════════════

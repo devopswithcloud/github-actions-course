@@ -1,0 +1,104 @@
+name: 13.1.2-With-Composite-Action
+
+# ════════════════════════════════════════════════════════════
+# Same workflow as 13.1.1 but using composite actions
+# Notice how much cleaner and shorter it is
+#
+# The java-build action handles:
+#   → checkout
+#   → setup-java
+#   → mvn test (optional)
+#   → mvn package
+#
+# Change Java version → update action.yml ONE place
+# All workflows using this action get the update automatically
+# ════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      java-version:
+        description: Java version to use
+        type: choice
+        options: [ '17', '21' ]
+        default: '21'
+      run-tests:
+        description: Run tests?
+        type: boolean
+        default: true
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4     # REQUIRED before local action
+
+      - name: Build and test
+        id: build                     # id needed to read outputs
+        uses: ./.github/actions/java-build
+        with:
+          java-version: ${{ inputs.java-version }}
+          run-tests: 'true'
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          service-name: i27academy-devops-dashboard
+          branch: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+          actor: ${{ github.actor }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build JAR
+        id: build
+        uses: ./.github/actions/java-build
+        with:
+          java-version: ${{ inputs.java-version }}
+          run-tests: 'false'          # tests already ran in test job
+
+      - name: Show build output
+        run: |
+          echo "JAR path    : ${{ steps.build.outputs.jar-path }}"
+          echo "Test result : ${{ steps.build.outputs.test-result }}"
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: devops-dashboard-jar
+          path: ${{ steps.build.outputs.jar-path }}
+          retention-days: 7
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java via composite action
+        uses: ./.github/actions/java-build
+        with:
+          java-version: ${{ inputs.java-version }}
+          run-tests: 'false'
+
+      - name: Run quality checks
+        run: mvn verify -DskipTests

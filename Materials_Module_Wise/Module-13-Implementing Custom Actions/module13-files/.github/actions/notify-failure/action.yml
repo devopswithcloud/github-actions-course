@@ -1,0 +1,37 @@
+name: Notify on Failure
+description: |
+  Composite action to send a notification when a pipeline fails.
+  Simulates Slack/email notification.
+
+inputs:
+  service-name:
+    description: Name of the service that failed
+    required: true
+
+  branch:
+    description: Branch where failure occurred
+    required: true
+
+  commit:
+    description: Commit SHA
+    required: true
+
+  actor:
+    description: Who triggered the run
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Send failure notification
+      shell: bash
+      run: |
+        echo "============================="
+        echo "❌ PIPELINE FAILURE ALERT"
+        echo "============================="
+        echo "Service : ${{ inputs.service-name }}"
+        echo "Branch  : ${{ inputs.branch }}"
+        echo "Commit  : ${{ inputs.commit }}"
+        echo "Actor   : ${{ inputs.actor }}"
+        echo "============================="
+        echo "Would send Slack/email notification here"

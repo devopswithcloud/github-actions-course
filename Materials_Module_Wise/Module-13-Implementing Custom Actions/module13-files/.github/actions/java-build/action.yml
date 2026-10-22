@@ -1,0 +1,84 @@
+name: Java Build Action
+description: |
+  Composite action for i27Academy Java services.
+  Handles checkout, Java setup and Maven build.
+  Eliminates repeated steps across workflows.
+
+inputs:
+  java-version:
+    description: Java version to use
+    required: false
+    default: '21'
+
+  distribution:
+    description: Java distribution
+    required: false
+    default: 'temurin'
+
+  run-tests:
+    description: Run tests before building (true/false)
+    required: false
+    default: 'true'
+
+  working-directory:
+    description: Directory to run Maven commands in
+    required: false
+    default: '.'
+
+outputs:
+  jar-path:
+    description: Path to the built JAR file
+    value: ${{ steps.build.outputs.jar-path }}
+
+  test-result:
+    description: Result of test run — passed or skipped
+    value: ${{ steps.test.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: ${{ inputs.distribution }}
+        cache: maven
+
+    - name: Run tests
+      id: test
+      if: inputs.run-tests == 'true'
+      shell: bash                        # REQUIRED in composite actions
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        mvn test
+        echo "result=passed" >> $GITHUB_OUTPUT
+
+    - name: Set test skipped output
+      if: inputs.run-tests != 'true'
+      shell: bash
+      run: echo "result=skipped" >> $GITHUB_OUTPUT
+
+    - name: Build JAR
+      id: build
+      shell: bash                        # REQUIRED in composite actions
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        mvn package -DskipTests
+        JAR=$(find target -name "*.jar" -not -name "*sources*" | head -1)
+        echo "jar-path=$JAR" >> $GITHUB_OUTPUT
+        echo "Built JAR: $JAR"
+
+# ════════════════════════════════════════════════════════════
+# KEY RULES for composite actions:
+#
+# 1. shell: bash is REQUIRED on every run: step
+#    → unlike regular workflows, shell is not inherited
+#
+# 2. inputs.* accesses inputs defined above
+#
+# 3. outputs.value must point to a step output
+#    → step must have id: for this to work
+#
+# 4. using: composite — always this for step-based actions
+# ════════════════════════════════════════════════════════════

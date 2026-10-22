@@ -1,0 +1,69 @@
+name: 12.3.1-Concurrency-Deployments
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+
+  # ── CI — cancel old runs when new commit arrives ────────────
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ci-${{ github.ref }}       # unique per branch
+      cancel-in-progress: true          # cancel old run — new commit arrived
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - run: mvn test
+
+  # ── Deploy dev — never cancel a running deploy ──────────────
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: ci
+    concurrency:
+      group: deploy-development         # global — one dev deploy at a time
+      cancel-in-progress: false         # NEVER cancel a running deploy
+    environment: development
+    steps:
+      - name: Deploy to dev
+        run: |
+          echo "Deploying to development"
+          echo "This deploy will NEVER be cancelled mid-flight"
+
+  # ── Deploy production — strict global concurrency ───────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    concurrency:
+      group: deploy-production          # global — one prod deploy at a time
+      cancel-in-progress: false         # NEVER cancel production deploy
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production"
+          echo "Only one production deploy runs at a time globally"
+
+# ════════════════════════════════════════════════════════════
+# cancel-in-progress: true  → CI runs
+#   → New push arrives → old CI run cancelled → only latest runs
+#   → Saves time — no point running CI on stale code
+#
+# cancel-in-progress: false → Deploy runs
+#   → New push arrives → new deploy QUEUES and waits
+#   → Running deploy finishes first → then next one starts
+#   → NEVER interrupt a deployment mid-flight
+#
+# group: naming:
+#   ci-${{ github.ref }}    → separate group per branch
+#   deploy-production       → global — one at a time across all branches
+# ════════════════════════════════════════════════════════════
